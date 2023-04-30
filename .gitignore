@@ -1,0 +1,6 @@
+SDF_ImGUI/SDF_ImGUI/.vs
+SDF_ImGUI/SDF_ImGUI/Debug
+SDF_ImGUI/SDF_ImGUI/x64
+
+SDF_ImGUI/*.sln
+SDF_ImGUI/*.vcxproj*
