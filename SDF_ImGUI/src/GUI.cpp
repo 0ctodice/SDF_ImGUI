@@ -40,7 +40,7 @@ void GUI::render(GLFWwindow* currentContext) const {
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
-	//DockSpace();
+	DockSpace();
 
 	for (auto it = _panels.begin(); it != _panels.end(); ++it) {
 		it->second.renderPanel();

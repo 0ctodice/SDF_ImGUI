@@ -41,11 +41,6 @@ std::string computeFS(std::vector<Sphere> spheres) {
 	}
 	FS += "FragColor = futureColor;\n";
 	FS += "}\0";
-	/*FS += "if (test < 0){\n";
-	FS += "	FragColor = vec4(1.0, 0.0, 0.0, 1.0);\n";
-	FS += "}else{\n";
-	FS += "	FragColor = vec4(1.0, 1.0, 1.0, 1.0);}\n";
-	FS += "}\0";*/
 
 	std::cout << FS << std::endl;
 
@@ -110,22 +105,33 @@ int main(int, char**) {
 
 	GUI gui{window, glsl_version};
 
+	int sphereCounter = 0;
 
 	gui.addPanel({ "SDF Manager", [&]() {
 		ImGui::Begin("SDF Manager");
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / gui.getIo().Framerate, gui.getIo().Framerate);
 		if (ImGui::Button("ADD SPHERE")) {
-			std::string title = "SP" + std::to_string(spheres.size() + 1);
+			std::string title = "SP" + std::to_string(++sphereCounter);
 			spheres.emplace_back( title );
 			shouldRecompFS = true;
 		}
 
-		for (int i = 0; i < spheres.size(); i++) {
-			ImGui::Text(spheres[i].name.c_str());
-			std::string labelPos = spheres[i].name + "POS";
-			std::string labelCol = spheres[i].name + "COL";
-			ImGui::DragFloat4(labelPos.c_str(), spheres[i].position);
-			ImGui::ColorEdit4(labelCol.c_str(), spheres[i].color);
+		ImGui::Separator();
+
+		for (auto it = spheres.begin(); it != spheres.end();) {
+			ImGui::Text(it->name.c_str());
+			std::string labelPos = it->name + "POS";
+			std::string labelCol = it->name + "COL";
+			std::string labelKil = "KILL " + it->name;
+			ImGui::DragFloat4(labelPos.c_str(), it->position);
+			ImGui::ColorEdit4(labelCol.c_str(), it->color);
+			if (ImGui::Button(labelKil.c_str())) {
+				it = spheres.erase(it);
+				shouldRecompFS = true;
+			}
+			else {
+				it++;
+			}
 			ImGui::Separator();
 		}
 
@@ -143,18 +149,19 @@ int main(int, char**) {
 		glfwPollEvents();
 
 		int display_w, display_h;
-		glfwGetFramebufferSize(window, &display_w, &display_h); 
+		glfwGetFramebufferSize(window, &display_w, &display_h);
 		glViewport(0, 0, display_w, display_h);
 		glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glEnable(GL_DEPTH_TEST);
+
+		glBindVertexArray(vao);
 
 		if (shouldRecompFS) {
 			shaderProgram.createProgram(VS, computeFS(spheres).c_str());
 			shaderProgram.useProgram();
 			shouldRecompFS = false;
 		}
-
 		for (int i = 0; i < spheres.size(); i++) {
 			float shaderPoint[4]{ spheres[i].position[0], spheres[i].position[1], spheres[i].position[2], spheres[i].position[3] };
 			shaderPoint[0] += display_w / 2.0f;
@@ -165,7 +172,6 @@ int main(int, char**) {
 			glUniform4fv(glGetUniformLocation(shaderProgram.getGLid(), col.c_str()), 1, spheres[i].color);
 		}
 
-		glBindVertexArray(vao);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 
 		gui.render(glfwGetCurrentContext());
