@@ -5,6 +5,8 @@
 #include "Program.h"
 #include <vector>
 #include "main.h"
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 static void glfw_error_callback(int error, const char* description)
 {
@@ -13,8 +15,8 @@ static void glfw_error_callback(int error, const char* description)
 
 struct Sphere {
 	std::string name;
-	float position[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-	float color[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	glm::vec4 position = { 0.0f, 0.0f, 0.0f, 0.0f };
+	glm::vec4 color = { 0.0f, 0.0f, 0.0f, 1.0f };
 	Sphere() : name { "" } {}
 	Sphere(std::string n) : name {n} {}
 };
@@ -123,8 +125,8 @@ int main(int, char**) {
 			std::string labelPos = it->name + "POS";
 			std::string labelCol = it->name + "COL";
 			std::string labelKil = "KILL " + it->name;
-			ImGui::DragFloat4(labelPos.c_str(), it->position);
-			ImGui::ColorEdit4(labelCol.c_str(), it->color);
+			ImGui::DragFloat4(labelPos.c_str(), glm::value_ptr(it->position));
+			ImGui::ColorEdit4(labelCol.c_str(), glm::value_ptr(it->color));
 			if (ImGui::Button(labelKil.c_str())) {
 				it = spheres.erase(it);
 				shouldRecompFS = true;
@@ -162,6 +164,7 @@ int main(int, char**) {
 			shaderProgram.useProgram();
 			shouldRecompFS = false;
 		}
+
 		for (int i = 0; i < spheres.size(); i++) {
 			float shaderPoint[4]{ spheres[i].position[0], spheres[i].position[1], spheres[i].position[2], spheres[i].position[3] };
 			shaderPoint[0] += display_w / 2.0f;
@@ -169,7 +172,7 @@ int main(int, char**) {
 			std::string pos = spheres[i].name + "POS";
 			std::string col = spheres[i].name + "COL";
 			glUniform4fv(glGetUniformLocation(shaderProgram.getGLid(), pos.c_str()), 1, shaderPoint);
-			glUniform4fv(glGetUniformLocation(shaderProgram.getGLid(), col.c_str()), 1, spheres[i].color);
+			glUniform4fv(glGetUniformLocation(shaderProgram.getGLid(), col.c_str()), 1, glm::value_ptr(spheres[i].color));
 		}
 
 		glDrawArrays(GL_TRIANGLES, 0, 6);
