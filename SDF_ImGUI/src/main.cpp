@@ -15,7 +15,7 @@ static void glfw_error_callback(int error, const char* description)
 
 struct Sphere {
 	std::string name;
-	glm::vec4 position = { 0.0f, 0.0f, 0.0f, 0.0f };
+	glm::vec3 position = { 0.0f, 0.0f, 0.0f };
 	glm::vec4 color = { 0.0f, 0.0f, 0.0f, 1.0f };
 	Sphere() : name { "" } {}
 	Sphere(std::string n) : name {n} {}
@@ -24,7 +24,7 @@ struct Sphere {
 std::string computeFS(std::vector<Sphere> spheres) {
 	std::string FS = "#version 330 core\nout vec4 FragColor;\n";
 	for (int i = 0; i < spheres.size(); i++) {
-		FS += "uniform vec4 " + spheres[i].name + "POS;\n";
+		FS += "uniform vec3 " + spheres[i].name + "POS;\n";
 		FS += "uniform vec4 " + spheres[i].name + "COL;\n";
 	}
 	FS += "vec4 futureColor = vec4(1.0, 1.0, 1.0, 1.0);\n";
@@ -39,7 +39,7 @@ std::string computeFS(std::vector<Sphere> spheres) {
 	FS += "float test = 1;\n";
 	FS += "vec3 frag = vec3(gl_FragCoord.xyz * gl_FragCoord.w);\n";
 	for (int i = 0; i < spheres.size(); i++) {
-		FS += "test = sdf_smin(test, sdf_sphere(" + spheres[i].name + "POS.xyz, frag," + spheres[i].name + "POS.w), 32, futureColor, " + spheres[i].name + "COL);\n";
+		FS += "test = sdf_smin(test, sdf_sphere(vec3(" + spheres[i].name + "POS.xy, 1.0f), frag," + spheres[i].name + "POS.z), 32, futureColor, " + spheres[i].name + "COL);\n";
 	}
 	FS += "FragColor = futureColor;\n";
 	FS += "}\0";
@@ -125,7 +125,7 @@ int main(int, char**) {
 			std::string labelPos = it->name + "POS";
 			std::string labelCol = it->name + "COL";
 			std::string labelKil = "KILL " + it->name;
-			ImGui::DragFloat4(labelPos.c_str(), glm::value_ptr(it->position));
+			ImGui::DragFloat3(labelPos.c_str(), glm::value_ptr(it->position));
 			ImGui::ColorEdit4(labelCol.c_str(), glm::value_ptr(it->color));
 			if (ImGui::Button(labelKil.c_str())) {
 				it = spheres.erase(it);
@@ -166,12 +166,12 @@ int main(int, char**) {
 		}
 
 		for (int i = 0; i < spheres.size(); i++) {
-			float shaderPoint[4]{ spheres[i].position[0], spheres[i].position[1], spheres[i].position[2], spheres[i].position[3] };
-			shaderPoint[0] += display_w / 2.0f;
-			shaderPoint[1] += display_h / 2.0f;
+			glm::vec3 shaderPoint = { spheres[i].position };
+			shaderPoint.x += display_w / 2.0f;
+			shaderPoint.y += display_h / 2.0f;
 			std::string pos = spheres[i].name + "POS";
 			std::string col = spheres[i].name + "COL";
-			glUniform4fv(glGetUniformLocation(shaderProgram.getGLid(), pos.c_str()), 1, shaderPoint);
+			glUniform3fv(glGetUniformLocation(shaderProgram.getGLid(), pos.c_str()), 1, glm::value_ptr(shaderPoint));
 			glUniform4fv(glGetUniformLocation(shaderProgram.getGLid(), col.c_str()), 1, glm::value_ptr(spheres[i].color));
 		}
 
